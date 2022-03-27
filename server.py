@@ -4,12 +4,14 @@
 # Author: Ryan Clifford
 # 2022-03-26
 
+from httplib2 import UnimplementedDigestAuthOptionError
 import bluetooth
 import json
 import data
 import motor
 SERVER_NAME = "Group 4"
 UUID = ""
+BUFSIZE = 4096
 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 socket.bind(("", bluetooth.PORT_ANY))
 socket.listen(1)
@@ -25,13 +27,23 @@ bluetooth.advertise_service(socket, SERVER_NAME, service_id=UUID,
 
 client_sock, client_info = socket.accept()
 print("Connect to: ", client_info)
-
+MotorControl = motor.MotorController()
 try:
     while True:
-        data = client_sock.recv(1024)
+        # assume all data can be recieved at once
+        data = client_sock.recv(BUFSIZE)
         if not data:
             break
-        print(data)
+        data = json.loads(data)
+        if data.Command != "KEEP_ALIVE":
+            if data.Command == "OPEN":
+               MotorControl.open()
+               client_sock.send(json.dumps({"RESP": "OPEN"}))
+            elif data.Command == "CLOSE":
+                MotorControl.close()
+                client_sock.send(json.dumps({"RESP": "CLOSED"}))
+            elif data.Command == "SCHED":
+                raise NotImplementedError
 except OSError:
     pass
 
