@@ -1,0 +1,63 @@
+    1  ls
+    2  pwd
+    3  sudo apt update
+    4  apt search bluez
+    5  sudo apt install python3-bluez
+    6  python
+    7  ls
+    8  python server.py 
+    9  pip install httplib2
+   10  apt search pip
+   11  sudo apt install python3-pip
+   12  python server.py 
+   13  apt search httplib2
+   14  sudo apt install python3-httplib2
+   15  python server.py 
+   16  vi server.py 
+   17  python server.py 
+   18  vi server.py 
+   19  sudo python server.py
+   20  vi server.py 
+   21  sudo python server.py
+   22  sudo nano /etc/systemd/system/dbus-org.bluez.service 
+   23  sudo systemctl start bluetooth
+   24  bluetoothctl 
+   25  sudo python server.py
+   26  hciconfig hciX piscan
+   27  sudo hciconfig hciX piscan
+   28  sudo python server.py
+   29  python server.py
+   30  sudo nano /etc/systemd/system/dbus-org.bluez.service 
+   31  bluetoothd
+   32  sudo bluetoothd
+   33  sudo nano /etc/systemd/system/dbus-org.bluez.service 
+   34  sudo systemctl restart bluetooth
+   35  systemctl daemon-reload
+   36  python server.py
+   37  sudo sdptool add SP
+   38  python server.py
+   39  sudo python server.py
+   40  sudo systemctl restart bluetooth
+   41  python server.py
+   42  sudo systemctl status bluetooth
+   43  less /var/run/sdp 
+   44  sudo sdptool add SP
+   45  python server.py
+   46  sudo python server.py
+   47  rfcomm
+   48  sudo nano /etc/systemd/system/dbus-org.bluez.service 
+   49  reboot
+   50  sudo reboot
+   51  sudo python server.py
+   52  systemctl status bluetooth
+   53  sudo sdptool add SP
+   54  systemctl status bluetooth
+   55  sudo python server.py
+   56  bluetoothctl 
+   57  sudo python server.py
+   58  bluetoothctl 
+   59  sudo python server.py
+   60  ls
+   61  sudo apt install neovim
+   62  history 
+   63  history >> history.txt

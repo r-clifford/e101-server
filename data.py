@@ -4,15 +4,15 @@ import json
 from typing import AnyStr
 import datetime
 class Data:
-    def __init__(self, Command, Time=datetime.datetime.now().isoformat(), Args=None) -> None:
+    def __init__(self, Command, Time=datetime.datetime.now().isoformat(), T1="", T2="") -> None:
         self.Command = Command
-        if Command.lower() == "sched" and len(Args) < 2:
-            raise TypeError
         self.Time = Time
-        self.Args = Args
+        self.T1 = T1
+        self.T2 = T2
         self.object = {"Command": self.Command,
                         "Time": self.Time,
-                        "Args": self.Args}
+                        "T1": self.T1,
+                        "T2": self.T2}
     
     def Serialize(self):
         return json.dumps(self.object)
