@@ -25,6 +25,7 @@ bluetooth.advertise_service(socket, SERVER_NAME, service_id=UUID,
                             service_classes=[UUID, bluetooth.SERIAL_PORT_CLASS],
                             profiles=[bluetooth.SERIAL_PORT_PROFILE],
                             )
+print("Service Started")
 try:
     while True:
         client_sock, client_info = socket.accept()
@@ -40,17 +41,22 @@ try:
                 data = client_sock.recv(BUFSIZE)
                 if not data:
                     break
-                data = json.loads(data)
-                if data.Command == "OPEN":
+                #data = json.loads(data)
+                if data == b"OPEN":
                     if currentState == "closed":
+                        print(f"[{data}] Opening...")
                         MotorControl.open()
                         currentState = "open"
-                elif data.Command == "CLOSE":
+                elif data == b"CLOSE":
                     if currentState == "open":
+                        print(f"[{data}] Closing...")
                         MotorControl.close()
                         currentState = "closed"
-                elif data.Command == "SCHED":
-                    raise NotImplementedError
+                elif data == b"SCHED":
+                    print(f"Scheduling not implemented: [{data}]")
+                    # raise NotImplementedError
+                else:
+                    print(f"Unknown data: {data}")
         except OSError:
             pass
 
