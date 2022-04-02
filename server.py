@@ -7,6 +7,13 @@
 import sys
 import bluetooth
 import motor
+if len(sys.argv) < 2:
+    raise Exception('Provide current state of door ("open"/"closed")')
+DEBUG_MODE = False
+if len(sys.argv) > 2:
+    if sys.argv[2].lower() == "DEBUG":
+        DEBUG_MODE = True
+        print("In debugging mode, will not call motor control")
 
 SERVER_NAME = "Group 4"
 print(SERVER_NAME)
@@ -26,15 +33,15 @@ bluetooth.advertise_service(
     service_classes=[UUID, bluetooth.SERIAL_PORT_CLASS],
     profiles=[bluetooth.SERIAL_PORT_PROFILE],
 )
-print("Service Started")
-
+print("Bluetooth Service Started")
+if not DEBUG_MODE:
+    MotorControl = motor.MotorController()
+    print("Motor Controller Initialized")
 try:
     while True:
         client_sock, client_info = socket.accept()
         print("Connect to: ", client_info)
-        MotorControl = motor.MotorController()
-        if len(sys.argv) < 2:
-            raise Exception('Provide current state of door ("open"/"closed")')
+
         currentState = sys.argv[1].lower()
 
         try:
@@ -47,13 +54,19 @@ try:
                 if data == b"OPEN":
                     if currentState == "closed":
                         print(f"[{data}] Opening...")
-                        MotorControl.open()
+                        if not DEBUG_MODE:
+                            MotorControl.open()
                         currentState = "open"
+                    else:
+                        print("Door already open")
                 elif data == b"CLOSE":
                     if currentState == "open":
                         print(f"[{data}] Closing...")
-                        MotorControl.close()
+                        if not DEBUG_MODE:
+                            MotorControl.close()
                         currentState = "closed"
+                    else:
+                        print("Door already closed")
                 elif data == b"SCHED":
                     print(f"Scheduling not implemented: [{data}]")
                     # raise NotImplementedError
@@ -67,4 +80,4 @@ try:
         client_sock.close()
 except KeyboardInterrupt:
     socket.close()
-    print("Socket Closed")
+    print("\nSocket Closed")
