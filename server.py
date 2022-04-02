@@ -7,19 +7,30 @@
 import sys
 import bluetooth
 import motor
+import logging
+import schedule
+
+logging.basicConfig(
+    filename="server.log",
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s: %(message)s",
+)
 if len(sys.argv) < 2:
+    logging.critical("Current door state not provided")
     raise Exception('Provide current state of door ("open"/"closed")')
 DEBUG_MODE = False
 if len(sys.argv) > 2:
     if sys.argv[2].lower() == "DEBUG":
         DEBUG_MODE = True
         print("In debugging mode, will not call motor control")
+        logging.info("Started in Debug Mode")
 
 SERVER_NAME = "Group 4"
-print(SERVER_NAME)
+logging.info(f"Server name: {SERVER_NAME}")
 UUID = "9f32d32e-e7b2-484b-819f-a571b8219a74"
-print(UUID)
+logging.info(f"Service UUID: {UUID}")
 BUFSIZE = 4096
+logging.info(f"RECV BUFFSIZE: {BUFSIZE}")
 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 socket.bind(("", bluetooth.PORT_ANY))
 socket.listen(1)
@@ -33,14 +44,15 @@ bluetooth.advertise_service(
     service_classes=[UUID, bluetooth.SERIAL_PORT_CLASS],
     profiles=[bluetooth.SERIAL_PORT_PROFILE],
 )
-print("Bluetooth Service Started")
+logging.info("Bluetooth Service Started")
 if not DEBUG_MODE:
     MotorControl = motor.MotorController()
-    print("Motor Controller Initialized")
+    logging.info("Motor Controller Initialized")
+
 try:
     while True:
         client_sock, client_info = socket.accept()
-        print("Connect to: ", client_info)
+        logging.info("Connect to: ", client_info)
 
         currentState = sys.argv[1].lower()
 
@@ -53,31 +65,42 @@ try:
                 # data = json.loads(data)
                 if data == b"OPEN":
                     if currentState == "closed":
-                        print(f"[{data}] Opening...")
+                        logging.info(f"[{data}] Opening...")
                         if not DEBUG_MODE:
                             MotorControl.open()
                         currentState = "open"
                     else:
-                        print("Door already open")
+                        logging.info("Door already open")
                 elif data == b"CLOSE":
                     if currentState == "open":
-                        print(f"[{data}] Closing...")
+                        logging.info(f"[{data}] Closing...")
                         if not DEBUG_MODE:
                             MotorControl.close()
                         currentState = "closed"
                     else:
-                        print("Door already closed")
-                elif data == b"SCHED":
-                    print(f"Scheduling not implemented: [{data}]")
+                        logging.info("Door already closed")
+                elif str(data).split(";")[0] == "SCHED":
+                    logging.error(f"Scheduling not implemented: [{data}]")
+                    schedule_input = str(data).split(";")
+                    if len(schedule_input) < 4:
+                        logging.error(f"Schedule called with data: {data}")
+                    scheduler = schedule.Scheduler(
+                        MotorControl,
+                        schedule_input[1],
+                        schedule_input[2],
+                        schedule_input[3],
+                        currentState,
+                    )
+                    scheduler.start().join()
                     # raise NotImplementedError
                 else:
-                    print(f"Unknown data: {data}")
+                    logging.info(f"Unknown data: {data}")
         except OSError:
             pass
 
-        print("Client Disconnected")
+        logging.info("Client Disconnected")
 
         client_sock.close()
 except KeyboardInterrupt:
     socket.close()
-    print("\nSocket Closed")
+    logging.info("\nSocket Closed")
