@@ -4,11 +4,13 @@
 # Author: Ryan Clifford
 # 2022-03-26
 
+from datetime import datetime
 import sys
 import bluetooth
 import motor
 import logging
 import schedule
+from threading import Thread, Lock
 
 logging.basicConfig(
     filename="server.log",
@@ -45,16 +47,18 @@ bluetooth.advertise_service(
     profiles=[bluetooth.SERIAL_PORT_PROFILE],
 )
 logging.info("Bluetooth Service Started")
+currentState = sys.argv[1].lower()
+motorLock = Lock()
 if not DEBUG_MODE:
-    MotorControl = motor.MotorController()
+    MotorControl = motor.MotorController(currentState=currentState)
     logging.info("Motor Controller Initialized")
 
+
+currentTime = datetime.now()
 try:
     while True:
         client_sock, client_info = socket.accept()
         logging.info("Connect to: ", client_info)
-
-        currentState = sys.argv[1].lower()
 
         try:
             while True:
@@ -65,20 +69,22 @@ try:
                 # data = json.loads(data)
                 if data == b"OPEN":
                     if currentState == "closed":
-                        logging.info(f"[{data}] Opening...")
-                        if not DEBUG_MODE:
-                            MotorControl.open()
-                        currentState = "open"
+                        with motorLock:
+                            logging.info(f"[{data}] Opening...")
+                            if not DEBUG_MODE:
+                                MotorControl.open()
+                            currentState = "open"
                     else:
                         logging.info("Door already open")
                 elif data == b"CLOSE":
                     if currentState == "open":
-                        logging.info(f"[{data}] Closing...")
-                        if not DEBUG_MODE:
-                            MotorControl.close()
-                        currentState = "closed"
-                    else:
-                        logging.info("Door already closed")
+                        with motorLock:
+                            logging.info(f"[{data}] Closing...")
+                            if not DEBUG_MODE:
+                                MotorControl.close()
+                                currentState = "closed"
+                            else:
+                                logging.info("Door already closed")
                 elif str(data).split(";")[0] == "SCHED":
                     logging.error(f"Scheduling not implemented: [{data}]")
                     schedule_input = str(data).split(";")
@@ -86,12 +92,13 @@ try:
                         logging.error(f"Schedule called with data: {data}")
                     scheduler = schedule.Scheduler(
                         MotorControl,
+                        motorLock,
                         schedule_input[1],
                         schedule_input[2],
                         schedule_input[3],
                         currentState,
                     )
-                    scheduler.start().join()
+                    scheduler.start().start()
                     # raise NotImplementedError
                 else:
                     logging.info(f"Unknown data: {data}")

@@ -9,9 +9,11 @@ class MotorController:
     OPEN_VALUE = 0
     CLOSE_VALUE = 0
     RUN_TIME = 0
+    current_status = ""
 
     def __init__(
         self,
+        currentState,
         gpio_pin=17,
         min_pulse_width=0.001,
         max_pulse_width=0.002,
@@ -26,6 +28,7 @@ class MotorController:
             max_pulse_width=max_pulse_width,
             frame_width=frame_width,
         )
+        self.current_status = currentState
 
     def Pin(self):
         return self.motor.pin
@@ -40,14 +43,16 @@ class MotorController:
         self.__set_value(0)
 
     def open(self):
-        self.__set_value(self.OPEN_VALUE)
-        time.sleep(self.RUN_TIME)
-        self.stop()
+        if self.current_status != "open":
+            self.__set_value(self.OPEN_VALUE)
+            time.sleep(self.RUN_TIME)
+            self.stop()
 
     def close(self):
-        self.__set_value(self.CLOSE_VALUE)
-        time.sleep(self.RUN_TIME)
-        self.stop()
+        if self.current_status != "closed":
+            self.__set_value(self.CLOSE_VALUE)
+            time.sleep(self.RUN_TIME)
+            self.stop()
 
     def schedule(self, T1, T2):
         raise NotImplementedError
