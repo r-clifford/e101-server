@@ -5,11 +5,9 @@
 # 2022-03-26
 
 import sys
-from httplib2 import UnimplementedDigestAuthOptionError
 import bluetooth
-import json
-import data
 import motor
+
 SERVER_NAME = "Group 4"
 print(SERVER_NAME)
 UUID = "9f32d32e-e7b2-484b-819f-a571b8219a74"
@@ -21,18 +19,22 @@ socket.listen(1)
 
 port = socket.getsockname()[1]
 
-bluetooth.advertise_service(socket, SERVER_NAME, service_id=UUID,
-                            service_classes=[UUID, bluetooth.SERIAL_PORT_CLASS],
-                            profiles=[bluetooth.SERIAL_PORT_PROFILE],
-                            )
+bluetooth.advertise_service(
+    socket,
+    SERVER_NAME,
+    service_id=UUID,
+    service_classes=[UUID, bluetooth.SERIAL_PORT_CLASS],
+    profiles=[bluetooth.SERIAL_PORT_PROFILE],
+)
 print("Service Started")
+
 try:
     while True:
         client_sock, client_info = socket.accept()
         print("Connect to: ", client_info)
         MotorControl = motor.MotorController()
         if len(sys.argv) < 2:
-            raise Exception("Provide current state of door (\"open\"/\"closed\")")
+            raise Exception('Provide current state of door ("open"/"closed")')
         currentState = sys.argv[1].lower()
 
         try:
@@ -41,7 +43,7 @@ try:
                 data = client_sock.recv(BUFSIZE)
                 if not data:
                     break
-                #data = json.loads(data)
+                # data = json.loads(data)
                 if data == b"OPEN":
                     if currentState == "closed":
                         print(f"[{data}] Opening...")
