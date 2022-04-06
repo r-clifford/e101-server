@@ -69,22 +69,24 @@ try:
                 # data = json.loads(data)
                 if data == b"OPEN":
                     if currentState == "closed":
-                        with motorLock:
-                            logging.info(f"[{data}] Opening...")
-                            if not DEBUG_MODE:
-                                MotorControl.open()
-                            currentState = "open"
+                        motorLock.acquire(True)
+                        logging.info(f"[{data}] Opening...")
+                        if not DEBUG_MODE:
+                            MotorControl.open()
+                        currentState = "open"
+                        motorLock.release()
                     else:
                         logging.info("Door already open")
                 elif data == b"CLOSE":
                     if currentState == "open":
-                        with motorLock:
-                            logging.info(f"[{data}] Closing...")
-                            if not DEBUG_MODE:
-                                MotorControl.close()
-                                currentState = "closed"
-                            else:
-                                logging.info("Door already closed")
+                        motorLock.acquire(True)
+                        logging.info(f"[{data}] Closing...")
+                        if not DEBUG_MODE:
+                            MotorControl.close()
+                            currentState = "closed"
+                        else:
+                            logging.info("Door already closed")
+                        motorLock.release()
                 elif str(data).split(";")[0] == "SCHED":
                     logging.error(f"Scheduling not implemented: [{data}]")
                     schedule_input = str(data).split(";")
