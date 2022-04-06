@@ -9,7 +9,6 @@ import motor
 class Scheduler:
     openTime: datetime.datetime = datetime.datetime.now()
     closeTime: datetime.datetime = openTime
-    isClosed: bool = True
     motorController: motor.MotorController
 
     def __init__(
@@ -33,19 +32,31 @@ class Scheduler:
 
     def actuate(self):
         waitTime = 0  # time before actuation in seconds
+        nextWait = 0
         actuator = None
-        if self.isClosed:
-            waitTime = (self.openTime - datetime.datetime.now()).total_seconds()
+        openWait = (self.openTime - datetime.datetime.now()).total_seconds()
+        closeWait = (self.closeTime - datetime.datetime.now()).total_seconds()
+        if openWait < closeWait:
+            waitTime = openWait
+            nextWait = closeWait - waitTime
             logging.info(f"Opening in {waitTime} seconds")
             actuator = self.motorController.open
+            nextActuator = self.motorController.close
         else:
-            waitTime = (self.closeTime - datetime.datetime.now()).total_seconds()
+            waitTime = closeWait
+            nextWait = openWait - waitTime
             logging.info(f"Closing in {waitTime} seconds")
             actuator = self.motorController.close
+            nextActuator = self.motorController.open
         sleep(waitTime)
         with self.motorLock:
             logging.info("Opening/Closing")
             actuator()
+        logging.info(f"Sleeping {nextWait} for next actuation")
+        sleep(nextWait)
+        with self.motorLock:
+            logging.info("Opening/Closing")
+            nextActuator()
 
 
 # Non standard date time format given as strings
