@@ -34,6 +34,8 @@ class Scheduler:
         waitTime = 0  # time before actuation in seconds
         nextWait = 0
         actuator = None
+        logging.info(f"Open: {self.openTime}")
+        logging.info(f"Close: {self.closeTime}")
         openWait = (self.openTime - datetime.datetime.now()).total_seconds()
         closeWait = (self.closeTime - datetime.datetime.now()).total_seconds()
         if openWait < closeWait:
@@ -61,6 +63,7 @@ class Scheduler:
 
 # Non standard date time format given as strings
 def DateParser(date: str) -> datetime.datetime:
+    logging.debug(f"DateParser: {date}")
     parts = date.split("-")
     year = int(parts[0].strip())
     month = int(parts[1].strip())
@@ -69,6 +72,7 @@ def DateParser(date: str) -> datetime.datetime:
 
 
 def TimeParser(time: str, date: datetime.datetime) -> datetime.datetime:
+    logging.debug(f"TimeParser: {time}")
     parts = time.split(":")
     hour = int(parts[0].strip())
     minute = int(parts[1].strip())

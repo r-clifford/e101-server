@@ -22,7 +22,7 @@ if len(sys.argv) < 2:
     raise Exception('Provide current state of door ("open"/"closed")')
 DEBUG_MODE = False
 if len(sys.argv) > 2:
-    if sys.argv[2].lower() == "DEBUG":
+    if sys.argv[2].lower() == "debug":
         DEBUG_MODE = True
         print("In debugging mode, will not call motor control")
         logging.info("Started in Debug Mode")
@@ -58,7 +58,7 @@ currentTime = datetime.now()
 try:
     while True:
         client_sock, client_info = socket.accept()
-        logging.info("Connect to: ", client_info)
+        logging.info(f"Connect to: {client_info}")
 
         try:
             while True:
@@ -66,6 +66,8 @@ try:
                 data = client_sock.recv(BUFSIZE)
                 if not data:
                     break
+                logging.debug(f"RECV: {data}")
+
                 # data = json.loads(data)
                 if data == b"OPEN":
                     if currentState == "closed":
@@ -85,9 +87,11 @@ try:
                                 currentState = "closed"
                             else:
                                 logging.info("Door already closed")
-                elif str(data).split(";")[0] == "SCHED":
-                    logging.error(f"Scheduling not implemented: [{data}]")
-                    schedule_input = str(data).split(";")
+                elif data.decode().split(";")[0] == "SCHED":
+                    #logging.error(f"Scheduling not implemented: [{data}]")
+                    schedule_input = data.decode().split(";")
+                    logging.debug(f"SCHED Case: {schedule_input}")
+                    logging.info(schedule_input)
                     if len(schedule_input) < 4:
                         logging.error(f"Schedule called with data: {data}")
                     scheduler = schedule.Scheduler(
@@ -99,6 +103,7 @@ try:
                         currentState,
                     )
                     scheduler.start().start()
+                    logging.info(f"Started scheduler")
                     # raise NotImplementedError
                 else:
                     logging.info(f"Unknown data: {data}")
