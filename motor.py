@@ -6,9 +6,9 @@ import time
 
 
 class MotorController:
-    OPEN_VALUE = 0
-    CLOSE_VALUE = 0
-    RUN_TIME = 0
+    OPEN_VALUE = 1
+    CLOSE_VALUE = -1
+    RUN_TIME = 3
     current_status = ""
 
     def __init__(
@@ -47,12 +47,14 @@ class MotorController:
             self.__set_value(self.OPEN_VALUE)
             time.sleep(self.RUN_TIME)
             self.stop()
+            self.current_status = "open"
 
     def close(self):
         if self.current_status != "closed":
             self.__set_value(self.CLOSE_VALUE)
             time.sleep(self.RUN_TIME)
             self.stop()
+            self.current_status = "closed"
 
     def schedule(self, T1, T2):
         raise NotImplementedError

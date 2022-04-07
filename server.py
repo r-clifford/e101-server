@@ -58,7 +58,7 @@ currentTime = datetime.now()
 try:
     while True:
         client_sock, client_info = socket.accept()
-        logging.info("Connect to: ", client_info)
+        logging.info(f"Connect to: {client_info}")
 
         try:
             while True:
