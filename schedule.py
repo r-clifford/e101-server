@@ -31,7 +31,7 @@ class Scheduler:
 
     def actuate(self):
         waitTime = 0  # time before actuation in seconds
-        nextWait = 0
+        nextWait = 0 # time before second actuation in seconds
         actuator = None
         logging.info(f"Open: {self.openTime}")
         logging.info(f"Close: {self.closeTime}")

@@ -6,10 +6,10 @@ import time
 
 
 class MotorController:
-    OPEN_VALUE = 1
-    CLOSE_VALUE = -1
-    RUN_TIME = 3
-    current_status = ""
+    OPEN_VALUE = 1 # Value in [-1,1], -1 represents full reverse, 1 represents full forward, 0 is stopped
+    CLOSE_VALUE = -1 # see above
+    RUN_TIME = 3 # duration in seconds that motors run on 'open()' and 'close()'
+    current_status = "" # door status, valid states: "open", "closed"
 
     def __init__(
         self,
@@ -19,8 +19,8 @@ class MotorController:
         max_pulse_width=0.002,
         frame_width=0.020,
     ) -> None:
-        os.system("sudo pigpiod")
-        gpiozero.Device.pin_factory = gpiozero.pins.pigpio.PiGPIOFactory()
+        os.system("sudo pigpiod") # start PiGPIOd if not running, requires re-execution if not already running
+        gpiozero.Device.pin_factory = gpiozero.pins.pigpio.PiGPIOFactory() # Force servo controll using PiGPIO
         self.motor = gpiozero.Servo(
             pin=gpio_pin,
             initial_value=0,
@@ -55,9 +55,6 @@ class MotorController:
             time.sleep(self.RUN_TIME)
             self.stop()
             self.current_status = "closed"
-
-    def schedule(self, T1, T2):
-        raise NotImplementedError
 
 
 if __name__ == "__main__":
