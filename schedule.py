@@ -1,7 +1,6 @@
 import datetime
 import logging
-from multiprocessing import Lock
-from threading import Thread
+from threading import Thread, Lock
 from time import sleep
 import motor
 
@@ -23,9 +22,9 @@ class Scheduler:
             self.closeTime = TimeParser(closeTime, date)
         except:
             logging.critical("Could not parse time")
-        self.currentState = currentState
-        self.motorController = motorController
-        self.motorLock = motorLock
+        self.currentState: bool = currentState
+        self.motorController: motor.MotorController = motorController
+        self.motorLock: Lock = motorLock
 
     def start(self):
         return Thread(target=self.actuate)
@@ -51,14 +50,18 @@ class Scheduler:
             actuator = self.motorController.close
             nextActuator = self.motorController.open
         sleep(waitTime)
-        with self.motorLock:
-            logging.info("Opening/Closing")
-            actuator()
+
+        self.motorLock.acquire(blocking=True)
+        logging.info("Opening/Closing")
+        actuator()
+        self.motorLock.release()
+
         logging.info(f"Sleeping {nextWait} for next actuation")
         sleep(nextWait)
-        with self.motorLock:
-            logging.info("Opening/Closing")
-            nextActuator()
+        self.motorLock.acquire(blocking=True)
+        logging.info("Opening/Closing")
+        nextActuator()
+        self.motorLock.release()
 
 
 # Non standard date time format given as strings
