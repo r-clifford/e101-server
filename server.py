@@ -55,7 +55,6 @@ if not DEBUG_MODE:
     MotorControl = motor.MotorController(currentState=currentState)
     logging.info("Motor Controller Initialized")
 
-
 schedulerThreads: List[Thread] = []
 try:
     while True:
