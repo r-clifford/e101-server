@@ -11,7 +11,8 @@ import bluetooth
 import motor
 import logging
 import schedule
-from threading import Thread, Lock
+from multiprocessing import Process, Lock
+from multiprocessing.synchronize import Lock as LockType
 
 logging.basicConfig(
     filename="server.log",
@@ -55,7 +56,7 @@ if not DEBUG_MODE:
     MotorControl = motor.MotorController(currentState=currentState)
     logging.info("Motor Controller Initialized")
 
-schedulerThreads: List[Thread] = []
+schedulerThreads: List[Process] = []
 try:
     while True:
         client_sock, client_info = socket.accept()
@@ -69,27 +70,22 @@ try:
                 logging.debug(f"RECV: {data}")
 
                 if data == b"OPEN":
-                    if currentState == "closed":
 
-                        motorLock.acquire(blocking=True)
-                        logging.info(f"[{data}] Opening...")
-                        if not DEBUG_MODE:
-                            MotorControl.open()
-                        currentState = "open"
-                        motorLock.release()
+                    motorLock.acquire(block=True)
 
-                    else:
-                        logging.info("Door already open")
+                    if not DEBUG_MODE:
+                        MotorControl.open()
+
+                    motorLock.release()
+
                 elif data == b"CLOSE":
-                    if currentState == "open":
-                        motorLock.acquire(blocking=True)
-                        logging.info(f"[{data}] Closing...")
-                        if not DEBUG_MODE:
-                            MotorControl.close()
-                            currentState = "closed"
-                        motorLock.release()
-                    else:
-                        logging.info("Door already closed")
+
+                    motorLock.acquire(block=True)
+                    logging.info(f"[{data}] Closing...")
+                    if not DEBUG_MODE:
+                        MotorControl.close()
+                    motorLock.release()
+
                 elif data.decode().split(";")[0] == "SCHED":
                     schedule_input = data.decode().split(";")
                     logging.debug(f"SCHED Case: {schedule_input}")
@@ -111,9 +107,7 @@ try:
                     logging.info(f"[{data}] Canceling...")
                     logging.info(f"Found {len(schedulerThreads)} running threads")
                     for thread in schedulerThreads:
-                        thread.join(
-                            timeout=1
-                        )  # block until thread completes or 1 sec passes
+                        thread.terminate()
                         logging.info(f"Thread destroyed")
                 else:
                     logging.info(f"Unknown data: {data}")
