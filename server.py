@@ -6,6 +6,7 @@
 
 from datetime import datetime
 import sys
+from typing import List
 import bluetooth
 import motor
 import logging
@@ -55,6 +56,7 @@ if not DEBUG_MODE:
 
 
 currentTime = datetime.now()
+schedulerThreads: List[Thread] = []
 try:
     while True:
         client_sock, client_info = socket.accept()
@@ -62,33 +64,34 @@ try:
 
         try:
             while True:
-                # assume all data can be recieved at once
                 data = client_sock.recv(BUFSIZE)
                 if not data:
                     break
                 logging.debug(f"RECV: {data}")
 
-                # data = json.loads(data)
                 if data == b"OPEN":
                     if currentState == "closed":
-                        with motorLock:
-                            logging.info(f"[{data}] Opening...")
-                            if not DEBUG_MODE:
-                                MotorControl.open()
-                            currentState = "open"
+
+                        motorLock.acquire(blocking=True)
+                        logging.info(f"[{data}] Opening...")
+                        if not DEBUG_MODE:
+                            MotorControl.open()
+                        currentState = "open"
+                        motorLock.release()
+
                     else:
                         logging.info("Door already open")
                 elif data == b"CLOSE":
                     if currentState == "open":
-                        with motorLock:
-                            logging.info(f"[{data}] Closing...")
-                            if not DEBUG_MODE:
-                                MotorControl.close()
-                                currentState = "closed"
-                            else:
-                                logging.info("Door already closed")
+                        motorLock.acquire(blocking=True)
+                        logging.info(f"[{data}] Closing...")
+                        if not DEBUG_MODE:
+                            MotorControl.close()
+                            currentState = "closed"
+                        motorLock.release()
+                    else:
+                        logging.info("Door already closed")
                 elif data.decode().split(";")[0] == "SCHED":
-                    #logging.error(f"Scheduling not implemented: [{data}]")
                     schedule_input = data.decode().split(";")
                     logging.debug(f"SCHED Case: {schedule_input}")
                     logging.info(schedule_input)
@@ -102,14 +105,23 @@ try:
                         schedule_input[3],
                         currentState,
                     )
-                    scheduler.start().start()
+                    schedulerThreads.append(scheduler.start())
+                    schedulerThreads[-1].start()
                     logging.info(f"Started scheduler")
-                    # raise NotImplementedError
+                elif data == b"CANCEL":
+                    logging.info(f"[{data}] Canceling...")
+                    logging.info(f"Found {len(schedulerThreads)} running threads")
+                    for thread in schedulerThreads:
+                        thread.join(
+                            timeout=1
+                        )  # block until thread completes or 1 sec passes
+                        logging.info(f"Thread destroyed")
                 else:
                     logging.info(f"Unknown data: {data}")
         except OSError:
-            pass
-
+            logging.critical("OS ERROR")
+        except UnboundLocalError:
+            logging.error(f"Motor controller likely unbound: DEBUG == {DEBUG_MODE}")
         logging.info("Client Disconnected")
 
         client_sock.close()
