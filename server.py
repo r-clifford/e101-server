@@ -21,6 +21,8 @@ logging.basicConfig(
 if len(sys.argv) < 2:
     logging.critical("Current door state not provided")
     raise Exception('Provide current state of door ("open"/"closed")')
+currentState = sys.argv[1].lower()
+
 DEBUG_MODE = False
 if len(sys.argv) > 2:
     if sys.argv[2].lower() == "debug":
@@ -48,14 +50,11 @@ bluetooth.advertise_service(
     profiles=[bluetooth.SERIAL_PORT_PROFILE],
 )
 logging.info("Bluetooth Service Started")
-currentState = sys.argv[1].lower()
 motorLock = Lock()
 if not DEBUG_MODE:
     MotorControl = motor.MotorController(currentState=currentState)
     logging.info("Motor Controller Initialized")
 
-
-currentTime = datetime.now()
 schedulerThreads: List[Thread] = []
 try:
     while True:
