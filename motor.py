@@ -7,9 +7,10 @@ import time
 
 
 class MotorController:
-    OPEN_VALUE = 1  # Value in [-1,1], -1 represents full reverse, 1 represents full forward, 0 is stopped
-    CLOSE_VALUE = -1  # see above
-    RUN_TIME = 3  # duration in seconds that motors run on 'open()' and 'close()'
+    # ** Current configuration has motors inverted
+    OPEN_VALUE = -1  # Value in [-1,1], -1 represents full reverse, 1 represents full forward, 0 is stopped
+    CLOSE_VALUE = 1  # see above
+    RUN_TIME = 6  #!! duration in seconds that motors run on 'open()' and 'close()' **Need more testing**
     current_status = ""  # door status, valid states: "open", "closed"
 
     def __init__(
